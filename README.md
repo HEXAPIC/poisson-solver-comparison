@@ -53,6 +53,11 @@ mpirun -n 4 ./build/poisson_petsc --N 1024 --rtol 1e-8
 mpirun -n 4 ./build/poisson_hypre --N 1024 --rtol 1e-8
 ```
 
+CLI flags:
+- `--N`   : number of interior points per dimension (global unknowns = N x N)
+- `--rtol`: relative tolerance (solver stopping target)
+
+
 Output:
 ```bash
 $ mpirun -n 4 ./build/poisson_petsc --N 1024 --rtol 1e-8
@@ -77,26 +82,6 @@ Total time:  0.688121 s
 Iters:       19
 Rel. res:    4.645e-09
 Errors:      L2 = 3.914182e-07, Linf = 7.828374e-07
-```
-
-
-CLI flags:
-- `--N`   : number of interior points per dimension (global unknowns = N x N)
-- `--rtol`: relative tolerance (solver stopping target)
-
-## Layout
-
-```
-poisson2d/
-├─ CMakeLists.txt
-├─ README.md
-├─ include/
-│  └─ solver_iface.hpp
-└─ src/
-   ├─ core.cpp
-   ├─ main.cpp
-   ├─ petsc_solver.cpp
-   └─ hypre_solver.cpp
 ```
 
 ## Notes
