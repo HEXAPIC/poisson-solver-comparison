@@ -175,7 +175,10 @@ struct HypreStructSolver final : ISolver {
     HYPRE_CHK( HYPRE_StructPFMGSetRelChange(pfmg, 0) );
     HYPRE_CHK( HYPRE_StructPFMGSetNumPreRelax(pfmg, 1) );
     HYPRE_CHK( HYPRE_StructPFMGSetNumPostRelax(pfmg, 1) );
-    // For anisotropy consider: HYPRE_StructPFMGSetRelaxType(pfmg, 1 or 2)
+    HYPRE_CHK( HYPRE_StructPFMGSetRelaxType(pfmg, 2) );  // Red-Black Gauss-Siedel, often better than Jacobi
+    HYPRE_CHK( HYPRE_StructPFMGSetLogging(pfmg, 1) );    // << add this for logging of residuals
+    // HYPRE_CHK( HYPRE_StructPFMGSetPrintLevel(pfmg, 1) ); // << optional; per-iter residuals
+
 
     double t1 = MPI_Wtime();
     HYPRE_CHK( HYPRE_StructPFMGSetup(pfmg, A, b, x) );

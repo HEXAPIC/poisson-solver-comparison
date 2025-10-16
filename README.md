@@ -110,14 +110,21 @@ $ mpirun -n 4 ./build/poisson_hypre_struct --N 1024 --rtol 1e-8
 Backend: (unknown)
 === Poisson 2D N=1024 (n=1048576), ranks=4 ===
 rtol target: 1.000e-08
-Setup time:  0.027485 s
-Solve time:  0.272684 s
-Total time:  0.334522 s
-Iters:       30
-Rel. res:    0.000e+00
-Errors:      L2 = 3.914059e-07, Linf = 7.828170e-07
-costeas@diana:~/poisson-solver-comparison$ 
+Setup time:  0.015045 s
+Solve time:  0.190085 s
+Total time:  0.250992 s
+Iters:       18
+Rel. res:    7.488e-09
+Errors:      L2 = 3.914120e-07, Linf = 7.828152e-07
 ```
+
+Results:
+xychart-beta
+    title "Solve time (s) — N=1024, 4 ranks"
+    x-axis ["PETSc (CSR+GAMG)","HYPRE (ParCSR+BoomerAMG)","PETSc (DMDA+PCMG)","HYPRE (Struct+PFMG)"]
+    y-axis "seconds" 0 --> 1.2
+    bar [1.041107, 0.455112, 0.986335, 0.190085]
+    
 
 ## Notes
 
