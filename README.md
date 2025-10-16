@@ -8,7 +8,7 @@ This bundle builds 5 executables from a shared core. It solves `-Δu=f` on `(0,1
 | `poisson_petsc`                 | PETSc **AIJ (CSR)**                  | **CG**       | **GAMG**      (algebraic multigrid) |
 | `poisson_hypre`                 | HYPRE **ParCSR**            (via IJ) | **PCG**      | **BoomerAMG** (algebraic multigrid) |
 | `poisson_petsc_struct`          | PETSc **DMDA** (structured 2-D grid) | **CG**       | **PCMG**      (geometric multigrid) |
-| `poisson_hypre_struct`          | HYPRE **Struct**   (5-point stencil) | **PFMG**     | *(none; PFMG is the solver)*        |
+| `poisson_hypre_struct`          | HYPRE **Struct**   (5-point stencil) | **PFMG**     | *(none)*                            |
 | `poisson_hypre_struct_bicgstab` | HYPRE **Struct**   (5-point stencil) | **BiCGSTAB** | **PFMG**   (strict, 1 V-cycle/iter) |
 
 When to use which
@@ -142,18 +142,17 @@ Rel. res:    5.320e-10
 Errors:      L2 = 3.914182e-07, Linf = 7.828345e-07
 ```
 
-
 Results:
 
 - Solve time (lower is better) — N=1024, 4 ranks
 
-| Solver                         | Time (s) | Bar                            |
-|--------------------------------|---------:|--------------------------------|
-| HYPRE (Struct + PFMG)          | 0.190085 | █████                          |
-| HYPRE (Struct + BiCGSTAB)      | 0.193523 | ██████                         |
-| HYPRE (ParCSR + BoomerAMG)     | 0.455112 | █████████████                  |
-| PETSc (DMDA + PCMG)            | 0.986335 | ████████████████████████████   |
-| PETSc (CSR + GAMG)             | 1.041107 | ██████████████████████████████ |
+| Solver (+ preconditioner) | Time (s) | Bar                            |
+|---------------------------|---------:|--------------------------------|
+| HYPRE (PFMG)              | 0.190085 | █████                          |
+| HYPRE (BiCGSTAB + PFMG)   | 0.193523 | ██████                         |
+| HYPRE (PCG + BoomerAMG)   | 0.455112 | █████████████                  |
+| PETSc (CG + PCMG)         | 0.986335 | ████████████████████████████   |
+| PETSc (CG + GAMG)         | 1.041107 | ██████████████████████████████ |
 
 _Scaled to slowest (1.041107 s)_
 
