@@ -1,13 +1,22 @@
 # Poisson 2D (PETSc vs HYPRE) — Minimal Test
 
-This bundle builds four executables from a shared core:
-- `poisson_petsc` → PETSc Algebraic Multigrid (CG + GAMG)
-- `poisson_hypre` → HYPRE Algebraic Multigrid (PCG + BoomerAMG)
-- `poisson_petsc_struct` → PETSc Geometric Multigrid (Struct + PFMG)
-- `poisson_hypre_struct` → HYPRE Geometric Multigrid (DMDA + PCMG)
+This bundle builds 5 executables from a shared core. It solves `-Δu=f` on `(0,1)^2` with Dirichlet 0 BCs using the manufactured solution `u*(x,y)=sin(pi x) sin(pi y)` so `f=2*pi^2*u*`. It reports L2/Linf error, iterations, and timing.
 
-It solves `-Δu=f` on `(0,1)^2` with Dirichlet 0 BCs using the manufactured solution
-`u*(x,y)=sin(pi x) sin(pi y)` so `f=2*pi^2*u*`. It reports L2/Linf error, iterations, and timing.
+
+| Executable                      | Matrix / Grid storage                | Solver       | Preconditioner                      |
+|---------------------------------|--------------------------------------|--------------|-------------------------------------|
+| `poisson_petsc`                 | PETSc **AIJ (CSR)**                  | **CG**       | **GAMG**      (algebraic multigrid) |
+| `poisson_hypre`                 | HYPRE **ParCSR**            (via IJ) | **PCG**      | **BoomerAMG** (algebraic multigrid) |
+| `poisson_petsc_struct`          | PETSc **DMDA** (structured 2-D grid) | **CG**       | **PCMG**      (geometric multigrid) |
+| `poisson_hypre_struct`          | HYPRE **Struct**   (5-point stencil) | **PFMG**     | *(none; PFMG is the solver)*        |
+| `poisson_hypre_struct_bicgstab` | HYPRE **Struct**   (5-point stencil) | **BiCGSTAB** | **PFMG**   (strict, 1 V-cycle/iter) |
+
+When to use which
+- **Structured grids (uniform Poisson):** Prefer **HYPRE/Struct + PFMG** or **PETSc/DMDA + PCMG** → fastest and most memory-friendly.
+- **Unstructured/irregular meshes or complex coefficients:** Use **ParCSR/IJ + AMG** (PETSc **GAMG** or HYPRE **BoomerAMG**) → robust without geometric info.
+- **Nonsymmetric or mildly non-SPD systems on structured grids:** **BiCGSTAB + PFMG preconditioner** is a solid choice.
+- **SPD with good preconditioner:** **CG** is typically the most efficient Krylov method.
+
 
 ## Prereqs
 
@@ -41,7 +50,7 @@ cmake --install build
 ## Build
 
 ```bash
-cmake -S . -B build -DENABLE_PETSC=ON -DENABLE_HYPRE=ON -DENABLE_PETSC_STRUCT=ON -DENABLE_HYPRE_STRUCT=ON -DPETSC_DIR=$HOME/petsc -DPETSC_ARCH=arch-linux-c-opt -DCMAKE_BUILD_TYPE=Release -DHYPRE_DIR=$HOME/hypre/install/lib/cmake/HYPRE
+cmake -S . -B build -DENABLE_PETSC=ON -DENABLE_HYPRE=ON -DENABLE_PETSC_STRUCT=ON -DENABLE_HYPRE_STRUCT=ON -DENABLE_HYPRE_STRUCT_BICGSTAB=ON -DPETSC_DIR=$HOME/petsc -DPETSC_ARCH=arch-linux-c-opt -DCMAKE_BUILD_TYPE=Release -DHYPRE_DIR=$HOME/hypre/install/lib/cmake/HYPRE
 cmake --build build -j
 ```
 
@@ -59,6 +68,9 @@ mpirun -n 4 ./build/poisson_petsc_struct --N 1024 --rtol 1e-8 -ksp_type cg -pc_t
 
 # HYPRE Struct + PFMG
 mpirun -n 4 ./build/poisson_hypre_struct --N 1024 --rtol 1e-8
+
+# HYPRE Struct + BiCGSTAB
+mpirun -n 4 ./build/poisson_hypre_struct_bicgstab --N 1024 --rtol 1e-8
 
 
 ```
@@ -116,6 +128,18 @@ Total time:  0.250992 s
 Iters:       18
 Rel. res:    7.488e-09
 Errors:      L2 = 3.914120e-07, Linf = 7.828152e-07
+
+
+$ mpirun -n 4 ./build/poisson_hypre_struct_bicgstab --N 1024 --rtol 1e-8
+Backend: (unknown)
+=== Poisson 2D N=1024 (n=1048576), ranks=4 ===
+rtol target: 1.000e-08
+Setup time:  0.013841 s
+Solve time:  0.193523 s
+Total time:  0.248246 s
+Iters:       7
+Rel. res:    5.320e-10
+Errors:      L2 = 3.914182e-07, Linf = 7.828345e-07
 ```
 
 
@@ -123,13 +147,15 @@ Results:
 
 - Solve time (lower is better) — N=1024, 4 ranks
 
-| Solver                      | Time (s) | Bar                    |
-|-----------------------------|---------:|------------------------|
-| PETSc (CSR+GAMG)            | 1.041107 | ████████████████████   |
-| HYPRE (ParCSR+BoomerAMG)    | 0.455112 | █████████              |
-| PETSc (DMDA+PCMG)           | 0.986335 | ████████████████████▏  |
-| HYPRE (Struct+PFMG)         | 0.190085 | ████                   |
+| Solver                         | Time (s) | Bar                            |
+|--------------------------------|---------:|--------------------------------|
+| HYPRE (Struct + PFMG)          | 0.190085 | █████                          |
+| HYPRE (Struct + BiCGSTAB)      | 0.193523 | ██████                         |
+| HYPRE (ParCSR + BoomerAMG)     | 0.455112 | █████████████                  |
+| PETSc (DMDA + PCMG)            | 0.986335 | ████████████████████████████   |
+| PETSc (CSR + GAMG)             | 1.041107 | ██████████████████████████████ |
 
+_Scaled to slowest (1.041107 s)_
 
 
 ## Notes

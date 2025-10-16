@@ -102,5 +102,17 @@ if (ENABLE_HYPRE_STRUCT)
 endif()
 
 
+# ---- HYPRE Struct BiCGSTAB target ----
+option(ENABLE_HYPRE_STRUCT_BICGSTAB "Build HYPRE Struct+BiCGSTAB backend" ON)
+if (ENABLE_HYPRE_STRUCT_BICGSTAB)
+  find_package(HYPRE CONFIG REQUIRED)
+  add_executable(poisson_hypre_struct_bicgstab
+    $<TARGET_OBJECTS:common_objs>
+    src/hypre_struct_bicgstab_solver.cpp
+  )
+  target_compile_definitions(poisson_hypre_struct_bicgstab PRIVATE BACKEND_HYPRE)
+  target_include_directories(poisson_hypre_struct_bicgstab PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  target_link_libraries(poisson_hypre_struct_bicgstab PRIVATE HYPRE::HYPRE MPI::MPI_CXX)
+endif()
 
 
