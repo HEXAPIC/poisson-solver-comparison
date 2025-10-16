@@ -118,13 +118,19 @@ Rel. res:    7.488e-09
 Errors:      L2 = 3.914120e-07, Linf = 7.828152e-07
 ```
 
+
 Results:
-xychart-beta
-    title "Solve time (s) — N=1024, 4 ranks"
-    x-axis ["PETSc (CSR+GAMG)","HYPRE (ParCSR+BoomerAMG)","PETSc (DMDA+PCMG)","HYPRE (Struct+PFMG)"]
-    y-axis "seconds" 0 --> 1.2
-    bar [1.041107, 0.455112, 0.986335, 0.190085]
-    
+
+- Solve time (lower is better) — N=1024, 4 ranks
+
+| Solver                      | Time (s) | Bar                    |
+|-----------------------------|---------:|------------------------|
+| PETSc (CSR+GAMG)            | 1.041107 | ████████████████████   |
+| HYPRE (ParCSR+BoomerAMG)    | 0.455112 | █████████              |
+| PETSc (DMDA+PCMG)           | 0.986335 | ████████████████████▏  |
+| HYPRE (Struct+PFMG)         | 0.190085 | ████                   |
+
+
 
 ## Notes
 
