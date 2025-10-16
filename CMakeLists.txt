@@ -58,3 +58,49 @@ if (ENABLE_HYPRE)
   target_link_libraries(poisson_hypre PRIVATE HYPRE::HYPRE MPI::MPI_CXX)
 endif()
 
+# ---- PETSc DMDA+PCMG target ----
+option(ENABLE_PETSC_STRUCT "Build PETSc DMDA+PCMG backend" ON)
+if (ENABLE_PETSC_STRUCT)
+  # Prefer a proper FindPETSc if available
+  find_package(PETSc QUIET)
+  add_executable(poisson_petsc_struct
+    $<TARGET_OBJECTS:common_objs>
+    src/petsc_solver.cpp
+  )
+  target_compile_definitions(poisson_petsc_struct PRIVATE BACKEND_PETSC)
+  target_include_directories(poisson_petsc_struct PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  if (PETSc_FOUND)
+    target_include_directories(poisson_petsc_struct PRIVATE ${PETSC_INCLUDES})
+    target_link_libraries(poisson_petsc_struct PRIVATE ${PETSC_LIBRARIES})
+  else()
+    # Manual fallback via PETSC_DIR/PETSC_ARCH env or -D vars
+    if (DEFINED PETSC_DIR AND DEFINED PETSC_ARCH)
+      target_include_directories(poisson_petsc_struct PRIVATE ${PETSC_DIR}/include ${PETSC_DIR}/${PETSC_ARCH}/include)
+      
+      target_link_directories(poisson_petsc_struct PRIVATE ${PETSC_DIR}/${PETSC_ARCH}/lib)
+      target_link_libraries(poisson_petsc_struct PRIVATE petsc)
+    else()
+      message(WARNING "PETSc not found. Set PETSC_DIR/PETSC_ARCH or provide FindPETSc.cmake.")
+    endif()
+  endif()
+  target_link_libraries(poisson_petsc_struct PRIVATE MPI::MPI_CXX)
+endif()
+
+# ---- HYPRE Struct target ----
+option(ENABLE_HYPRE_STRUCT "Build HYPRE Struct+PFMG backend" ON)
+if (ENABLE_HYPRE_STRUCT)
+  # Prefer Config package (modern hypre installs export HYPRE::HYPRE)
+  find_package(HYPRE CONFIG REQUIRED)
+
+  add_executable(poisson_hypre_struct
+    $<TARGET_OBJECTS:common_objs>
+    src/hypre_struct_solver.cpp
+  )
+  target_compile_definitions(poisson_hypre_struct PRIVATE BACKEND_HYPRE)
+  target_include_directories(poisson_hypre_struct PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  target_link_libraries(poisson_hypre_struct PRIVATE HYPRE::HYPRE MPI::MPI_CXX)
+endif()
+
+
+
+

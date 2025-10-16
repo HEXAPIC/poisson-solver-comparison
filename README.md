@@ -1,8 +1,10 @@
 # Poisson 2D (PETSc vs HYPRE) — Minimal Test
 
-This bundle builds two executables from a shared core:
-- `poisson_petsc` → PETSc (CG + GAMG)
-- `poisson_hypre` → HYPRE (PCG + BoomerAMG)
+This bundle builds four executables from a shared core:
+- `poisson_petsc` → PETSc Algebraic Multigrid (CG + GAMG)
+- `poisson_hypre` → HYPRE Algebraic Multigrid (PCG + BoomerAMG)
+- `poisson_petsc_struct` → PETSc Geometric Multigrid (Struct + PFMG)
+- `poisson_hypre_struct` → HYPRE Geometric Multigrid (DMDA + PCMG)
 
 It solves `-Δu=f` on `(0,1)^2` with Dirichlet 0 BCs using the manufactured solution
 `u*(x,y)=sin(pi x) sin(pi y)` so `f=2*pi^2*u*`. It reports L2/Linf error, iterations, and timing.
@@ -39,7 +41,7 @@ cmake --install build
 ## Build
 
 ```bash
-cmake -S . -B build   -DENABLE_PETSC=ON -DENABLE_HYPRE=ON   -DPETSC_DIR=$HOME/petsc -DPETSC_ARCH=arch-linux-c-opt -DCMAKE_BUILD_TYPE=Release -DHYPRE_DIR=$HOME/hypre/install/lib/cmake/HYPRE
+cmake -S . -B build -DENABLE_PETSC=ON -DENABLE_HYPRE=ON -DENABLE_PETSC_STRUCT=ON -DENABLE_HYPRE_STRUCT=ON -DPETSC_DIR=$HOME/petsc -DPETSC_ARCH=arch-linux-c-opt -DCMAKE_BUILD_TYPE=Release -DHYPRE_DIR=$HOME/hypre/install/lib/cmake/HYPRE
 cmake --build build -j
 ```
 
@@ -51,6 +53,14 @@ mpirun -n 4 ./build/poisson_petsc --N 1024 --rtol 1e-8
 
 # HYPRE backend
 mpirun -n 4 ./build/poisson_hypre --N 1024 --rtol 1e-8
+
+# PETSc DMDA + PCMG (pass MG options)
+mpirun -n 4 ./build/poisson_petsc_struct --N 1024 --rtol 1e-8 -ksp_type cg -pc_type mg -pc_mg_levels 6 -pc_mg_galerkin pmat -mg_levels_ksp_type chebyshev -mg_levels_pc_type jacobi -mg_coarse_ksp_type preonly -mg_coarse_pc_type lu
+
+# HYPRE Struct + PFMG
+mpirun -n 4 ./build/poisson_hypre_struct --N 1024 --rtol 1e-8
+
+
 ```
 
 CLI flags:
@@ -82,6 +92,31 @@ Total time:  0.688121 s
 Iters:       19
 Rel. res:    4.645e-09
 Errors:      L2 = 3.914182e-07, Linf = 7.828374e-07
+
+
+$ mpirun -n 4 ./build/poisson_petsc_struct --N 1024 --rtol 1e-8 -ksp_type cg -pc_type mg -pc_mg_levels 6 -pc_mg_galerkin pmat -mg_levels_ksp_type chebyshev -mg_levels_pc_type jacobi -mg_coarse_ksp_type preonly -mg_coarse_pc_type lu
+Backend: (unknown)
+=== Poisson 2D N=1024 (n=1048576), ranks=4 ===
+rtol target: 1.000e-08
+Setup time:  0.042291 s
+Solve time:  0.986335 s
+Total time:  1.046358 s
+Iters:       12
+Rel. res:    1.507e-06
+Errors:      L2 = 3.914343e-07, Linf = 7.843982e-07
+
+
+$ mpirun -n 4 ./build/poisson_hypre_struct --N 1024 --rtol 1e-8
+Backend: (unknown)
+=== Poisson 2D N=1024 (n=1048576), ranks=4 ===
+rtol target: 1.000e-08
+Setup time:  0.027485 s
+Solve time:  0.272684 s
+Total time:  0.334522 s
+Iters:       30
+Rel. res:    0.000e+00
+Errors:      L2 = 3.914059e-07, Linf = 7.828170e-07
+costeas@diana:~/poisson-solver-comparison$ 
 ```
 
 ## Notes
